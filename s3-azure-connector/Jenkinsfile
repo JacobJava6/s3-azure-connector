@@ -11,22 +11,27 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh './mvnw clean package -DskipTests'
+				dir('s3-azure-connector') {
+					sh 'chmod +x mvnw'
+                	sh './mvnw clean package -DskipTests'
+                }
             }
         }
 
         stage('Deploy to EC2') {
             steps {
-                sshagent(credentials: ['ec2-ssh-key']) {
-                    sh '''
-                        scp -o StrictHostKeyChecking=no \
-                        target/*.jar \
-                        ubuntu@${EC2_HOST}:~/s3-azure-connector.jar
+				dir('s3-azure-connector') {
+               		sshagent(credentials: ['ec2-ssh-key']) {
+                    	sh '''
+                        	scp -o StrictHostKeyChecking=no \
+                        	target/*.jar \
+                        	ubuntu@${EC2_HOST}:~/s3-azure-connector.jar
 
-                        ssh -o StrictHostKeyChecking=no \
-                        ubuntu@${EC2_HOST} \
-                        "sudo systemctl restart s3-azure-connector"
-                    '''
+                        	ssh -o StrictHostKeyChecking=no \
+                       	 	ubuntu@${EC2_HOST} \
+                        	"sudo systemctl restart s3-azure-connector"
+                    	'''
+                	}
                 }
             }
         }
