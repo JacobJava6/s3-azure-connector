@@ -20,18 +20,26 @@ pipeline {
 
         stage('Deploy to EC2') {
             steps {
-				dir('s3-azure-connector') {
-               		sshagent(credentials: ['ec2-ssh-key']) {
-                    	sh '''
-                        	scp -o StrictHostKeyChecking=no \
-                        	target/*.jar \
-                        	ubuntu@${EC2_HOST}:~/s3-azure-connector.jar
+                dir('s3-azure-connector') {
+                    sshagent(credentials: ['ec2-ssh-key']) {
+                        sh '''
+                            scp -o StrictHostKeyChecking=no \
+                            target/s3-azure-connector-0.0.1-SNAPSHOT.jar \
+                            ubuntu@${EC2_HOST}:~/s3-azure-connector.jar
 
-                        	ssh -o StrictHostKeyChecking=no \
-                       	 	ubuntu@${EC2_HOST} \
-                        	"sudo systemctl restart s3-azure-connector"
-                    	'''
-                	}
+                            ssh -o StrictHostKeyChecking=no ubuntu@${EC2_HOST} '
+                                pkill -f "s3-azure-connector.jar" || true
+
+                                nohup env \
+                                AWS_REGION=us-east-1 \
+                                S3_BUCKET_NAME=jacob-10232025 \
+                                AZURE_BLOB_CONTAINER_NAME=s3files \
+                                AZURE_CONNECTION_SECRET_NAME=azure-storage-connection-string \
+                                java -jar /home/ubuntu/s3-azure-connector.jar \
+                                > /home/ubuntu/s3-azure-connector.log 2>&1 &
+                            '
+                        '''
+                    }
                 }
             }
         }
