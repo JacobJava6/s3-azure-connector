@@ -28,7 +28,7 @@ pipeline {
                             ubuntu@${EC2_HOST}:~/s3-azure-connector.jar
 
                             ssh -o StrictHostKeyChecking=no ubuntu@${EC2_HOST} '
-                                pkill -f "s3-azure-connector.jar" || true
+                                pkill -f "[s]3-azure-connector.jar" || true
 
                                 nohup env \
                                 AWS_REGION=us-east-1 \
