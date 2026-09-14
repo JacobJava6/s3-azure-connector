@@ -2,8 +2,9 @@ package com.example.connector.service;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import com.example.connector.config.properties.S3Properties;
 
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -17,16 +18,15 @@ import software.amazon.awssdk.services.s3.model.S3Object;
 public class S3Service {
 
 	private final S3Client s3Client;
+	private final S3Properties s3Properties;
 
-	public S3Service(S3Client s3Client) {
+	public S3Service(S3Client s3Client, S3Properties s3Properties) {
 		this.s3Client = s3Client;
+		this.s3Properties = s3Properties;
 	}
 
-	@Value("${aws.s3.bucket.name}")
-	private String bucket;
-
 	public List<S3Object> getBucketContentsList() {
-		ListObjectsV2Request request = ListObjectsV2Request.builder().bucket(bucket).build();
+		ListObjectsV2Request request = ListObjectsV2Request.builder().bucket(s3Properties.getBucketName()).build();
 
 		ListObjectsV2Response response = s3Client.listObjectsV2(request);
 
@@ -35,7 +35,7 @@ public class S3Service {
 
 	public ResponseInputStream<GetObjectResponse> getObject(String key) {
 
-		GetObjectRequest request = GetObjectRequest.builder().bucket(bucket).key(key).build();
+		GetObjectRequest request = GetObjectRequest.builder().bucket(s3Properties.getBucketName()).key(key).build();
 
 		return s3Client.getObject(request);
 	}

@@ -2,32 +2,27 @@ package com.example.connector.service;
 
 import java.io.InputStream;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobServiceClient;
+import com.example.connector.config.properties.AzureProperties;
 
 @Service
 public class AzureBlobService {
 
-	private static final Logger logger = LoggerFactory.getLogger(TransferService.class);
-
 	public final BlobServiceClient blobServiceClient;
+	private final AzureProperties azureProperties;
 
-	@Value("${azure.blob.container.name}")
-	private String containerName;
-
-	public AzureBlobService(BlobServiceClient blobServiceClient) {
+	public AzureBlobService(BlobServiceClient blobServiceClient, AzureProperties azureProperties) {
 		this.blobServiceClient = blobServiceClient;
+		this.azureProperties = azureProperties;
 	}
 
 	public void upload(String key, InputStream input, long fileSize) {
-		logger.info("Using Azure container: {}", containerName);
-		BlobContainerClient containerClient = blobServiceClient.getBlobContainerClient(containerName);
+		BlobContainerClient containerClient = blobServiceClient
+				.getBlobContainerClient(azureProperties.getContainerName());
 
 		BlobClient blobClient = containerClient.getBlobClient(key);
 
