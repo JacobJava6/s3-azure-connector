@@ -7,7 +7,9 @@ import org.springframework.stereotype.Service;
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobServiceClient;
+import com.azure.storage.blob.models.BlobStorageException;
 import com.example.connector.config.properties.AzureProperties;
+import com.example.connector.exceptions.AzureOperationException;
 
 @Service
 public class AzureBlobService {
@@ -21,12 +23,18 @@ public class AzureBlobService {
 	}
 
 	public void upload(String key, InputStream input, long fileSize) {
-		BlobContainerClient containerClient = blobServiceClient
-				.getBlobContainerClient(azureProperties.getContainerName());
 
-		BlobClient blobClient = containerClient.getBlobClient(key);
+		try {
+			BlobContainerClient containerClient = blobServiceClient
+					.getBlobContainerClient(azureProperties.getContainerName());
 
-		blobClient.upload(input, fileSize, true);
+			BlobClient blobClient = containerClient.getBlobClient(key);
+
+			blobClient.upload(input, fileSize, true);
+		} catch (BlobStorageException e) {
+			throw new AzureOperationException("Failed to upload blob to Azure: " + key, e);
+		}
+
 	}
 
 }

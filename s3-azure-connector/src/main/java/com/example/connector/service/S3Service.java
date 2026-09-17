@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.example.connector.config.properties.S3Properties;
+import com.example.connector.exceptions.S3OperationException;
 
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -12,6 +13,7 @@ import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.S3Object;
 
 @Service
@@ -26,18 +28,28 @@ public class S3Service {
 	}
 
 	public List<S3Object> getBucketContentsList() {
-		ListObjectsV2Request request = ListObjectsV2Request.builder().bucket(s3Properties.getBucketName()).build();
+		try {
+			ListObjectsV2Request request = ListObjectsV2Request.builder().bucket(s3Properties.getBucketName()).build();
 
-		ListObjectsV2Response response = s3Client.listObjectsV2(request);
+			ListObjectsV2Response response = s3Client.listObjectsV2(request);
+			return response.contents();
+		} catch (S3Exception e) {
+			throw new S3OperationException(
+					"Failed to list bucket contents from S3 bucket: " + s3Properties.getBucketName(), e);
+		}
 
-		return response.contents();
 	}
 
 	public ResponseInputStream<GetObjectResponse> getObject(String key) {
 
-		GetObjectRequest request = GetObjectRequest.builder().bucket(s3Properties.getBucketName()).key(key).build();
+		try {
+			GetObjectRequest request = GetObjectRequest.builder().bucket(s3Properties.getBucketName()).key(key).build();
 
-		return s3Client.getObject(request);
+			return s3Client.getObject(request);
+		} catch (S3Exception e) {
+			throw new S3OperationException("Failed to retrieve S3 Object: " + key, e);
+		}
+
 	}
 
 }
