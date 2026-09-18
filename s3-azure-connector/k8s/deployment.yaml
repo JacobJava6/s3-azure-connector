@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: s3-azure-connector
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: s3-azure-connector
+
+  template:
+    metadata:
+      labels:
+        app: s3-azure-connector
+
+    spec:
+      containers:
+        - name: s3-azure-connector
+          image: jacobjavasession/s3-azure-connector:latest
+
+          ports:
+            - containerPort: 8080
+
+          env:
+            - name: AWS_REGION
+              value: "us-east-1"
+
+            - name: S3_BUCKET_NAME
+              value: "jacob-10232025"
+
+            - name: AZURE_BLOB_CONTAINER_NAME
+              value: "s3files"
+
+            - name: AZURE_CONNECTION_SECRET_NAME
+              value: "azure-storage-connection-string"
