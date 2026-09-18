@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: s3-azure-connector-service
+
+spec:
+  selector:
+    app: s3-azure-connector
+
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+
+  type: NodePort
