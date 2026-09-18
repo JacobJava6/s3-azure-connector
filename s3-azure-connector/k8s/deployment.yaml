@@ -5,7 +5,7 @@ metadata:
   name: s3-azure-connector
 
 spec:
-  replicas: 1
+  replicas: 3
 
   selector:
     matchLabels:
@@ -22,7 +22,14 @@ spec:
           image: jacobjavasession/s3-azure-connector:latest
 
           ports:
-            - containerPort: 8080
+            - containerPort: 8080	
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu:"500m"
+              memory:"512Mi"
 
           env:
             - name: AWS_REGION
