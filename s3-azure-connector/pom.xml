@@ -69,6 +69,15 @@
         	<artifactId>spring-boot-configuration-processor</artifactId>
         	<optional>true</optional>
         </dependency>
+        
+        <!-- Event Hub Azure -->
+        <dependency>
+    		<groupId>com.azure</groupId>
+   			<artifactId>azure-messaging-eventhubs</artifactId>
+    		<version>5.21.6</version>
+		</dependency>
+		
+		
 	</dependencies>
 
 	<build>

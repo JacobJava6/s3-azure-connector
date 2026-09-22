@@ -1,12 +1,15 @@
 package com.example.connector.service;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import com.example.connector.model.TransferEvent;
 import com.example.connector.model.TransferResult;
 
 import software.amazon.awssdk.core.ResponseInputStream;
@@ -20,10 +23,13 @@ public class TransferService {
 
 	private final S3Service s3Service;
 	private final AzureBlobService azureBlobService;
+	private final TransferEventPublisher transferEventPublisher;
 
-	public TransferService(S3Service s3Service, AzureBlobService azureBlobService) {
+	public TransferService(S3Service s3Service, AzureBlobService azureBlobService,
+			TransferEventPublisher transferEventPublisher) {
 		this.s3Service = s3Service;
 		this.azureBlobService = azureBlobService;
+		this.transferEventPublisher = transferEventPublisher;
 	}
 
 	public TransferResult transfer() {
@@ -33,12 +39,14 @@ public class TransferService {
 		int totalFiles = s3BucketContentList.size();
 		List<String> successfulFiles = new ArrayList<>();
 		List<String> failedFiles = new ArrayList<>();
+
 		long transferStartTime = System.currentTimeMillis();
 
 		for (S3Object s3Object : s3BucketContentList) {
 
 			String key = s3Object.key();
 			long fileSize = s3Object.size();
+			String transferId = UUID.randomUUID().toString();
 			long fileStartTime = System.currentTimeMillis();
 
 			try (ResponseInputStream<GetObjectResponse> inputStream = s3Service.getObject(key)) {
@@ -51,6 +59,10 @@ public class TransferService {
 				logger.info(
 						"Transfer successful: file={}, size={} bytes, source=S3, destination=Azure Blob, time={} ms",
 						key, fileSize, fileTime);
+				TransferEvent event = new TransferEvent(transferId, key, s3Service.getBucketName(),
+						azureBlobService.getContainerName(), fileSize, "SUCCESS", null, fileTime, Instant.now());
+
+				transferEventPublisher.publish(event);
 			} catch (Exception e) {
 				failedFiles.add(key);
 
@@ -59,12 +71,18 @@ public class TransferService {
 				logger.error(
 						"Transfer failed: file={}, size={} bytes, source=S3, destination=Azure Blob, time={} ms, error={}",
 						key, fileSize, fileTime, e.getMessage());
+
+				TransferEvent event = new TransferEvent(transferId, key, s3Service.getBucketName(),
+						azureBlobService.getContainerName(), fileSize, "FAILED", e.getMessage(), fileTime,
+						Instant.now());
+
+				transferEventPublisher.publish(event);
 			}
 
 		}
 		long totalTime = System.currentTimeMillis() - transferStartTime;
 		logger.info("Transfer complete: total={}, successful={}, failed={}, totalTime={} ms", totalFiles,
-				successfulFiles, failedFiles, totalTime);
+				successfulFiles.size(), failedFiles.size(), totalTime);
 
 		return new TransferResult(totalFiles, successfulFiles.size(), failedFiles.size(), successfulFiles, failedFiles);
 	}

@@ -14,7 +14,7 @@ import com.example.connector.exceptions.AzureOperationException;
 @Service
 public class AzureBlobService {
 
-	public final BlobServiceClient blobServiceClient;
+	private final BlobServiceClient blobServiceClient;
 	private final AzureProperties azureProperties;
 
 	public AzureBlobService(BlobServiceClient blobServiceClient, AzureProperties azureProperties) {
@@ -35,6 +35,10 @@ public class AzureBlobService {
 			throw new AzureOperationException("Failed to upload blob to Azure: " + key, e);
 		}
 
+	}
+
+	public String getContainerName() {
+		return azureProperties.getContainerName();
 	}
 
 }

@@ -52,4 +52,8 @@ public class S3Service {
 
 	}
 
+	public String getBucketName() {
+		return s3Properties.getBucketName();
+	}
+
 }
